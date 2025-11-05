@@ -1,6 +1,6 @@
-# Proyecto MongoDB + Neo4j con Docker
+# TPO BD2 Aseguradoras
 
-Proyecto de JavaScript para trabajar con MongoDB y Neo4j en contenedores Docker.
+Trabajo Practico Aseguradoras 2Q2025 - BD2
 
 ## Requisitos
 
