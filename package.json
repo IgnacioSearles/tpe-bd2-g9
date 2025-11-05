@@ -1,0 +1,25 @@
+{
+  "name": "tpe-bd2-g9",
+  "version": "1.0.0",
+  "description": "Proyecto con MongoDB y Neo4j en Docker",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:restart": "docker-compose restart",
+    "docker:logs": "docker-compose logs -f",
+    "docker:status": "docker-compose ps",
+    "docker:clean": "docker-compose down -v"
+  },
+  "keywords": ["mongodb", "neo4j", "docker"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^6.3.0",
+    "neo4j-driver": "^5.15.0",
+    "dotenv": "^16.3.1"
+  }
+}
