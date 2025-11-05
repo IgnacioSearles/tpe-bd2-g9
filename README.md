@@ -26,13 +26,10 @@ npm install
 npm run docker:up
 ```
 
-5. **Esperar a que las bases de datos estén completamente inicializadas** (puede tomar 10-30 segundos):
+5. **Esperar a que las bases de datos estén completamente inicializadas**:
 ```bash
 npm run docker:logs
 ```
-Espera a ver los mensajes:
-- MongoDB: `Waiting for connections`
-- Neo4j: `Started.`
 
 ## Configuración
 
@@ -50,21 +47,6 @@ Ejecutar el ejemplo:
 ```bash
 npm start
 ```
-
-**Nota**: La aplicación verificará automáticamente que las bases de datos estén listas antes de ejecutar los ejemplos.
-
-## Acceso a las interfaces
-
-- **MongoDB**: Usar MongoDB Compass o mongo shell en `mongodb://admin:admin123@localhost:27017`
-- **Neo4j Browser**: Abrir en navegador `http://localhost:7474` (usuario: neo4j, password: admin123)
-
-**Nota**: Las URLs y credenciales dependen de tu configuración en `.env`.
-
-Para abrir Neo4j Browser automáticamente:
-```bash
-npm run neo4j:browser
-```
-
 ## Scripts disponibles
 
 ### Docker
@@ -79,10 +61,7 @@ npm run neo4j:browser
 - `npm start` - Ejecutar el ejemplo principal
 - `npm run dev` - Ejecutar en modo desarrollo (con watch)
 
-### Utilidades
-- `npm run neo4j:browser` - Abrir Neo4j Browser en el navegador
-- `npm run mongo:shell` - Conectar a MongoDB shell
-- `npm run neo4j:shell` - Conectar a Neo4j Cypher shell
+
 
 ## Estructura del proyecto
 
@@ -99,15 +78,8 @@ docker-compose.yml      # Configuración de contenedores
 
 ## Troubleshooting
 
-### Error: Connection was closed by server (Neo4j)
-Si obtienes este error, significa que Neo4j aún no ha terminado de inicializarse. Espera unos segundos más y vuelve a ejecutar `npm start`.
-
 Para verificar el estado de los contenedores:
 ```bash
 npm run docker:status
 npm run docker:logs
 ```
-
-## Seguridad
-
-⚠️ **IMPORTANTE**: Nunca subas el archivo `.env` a tu repositorio. Usa `.env.example` como plantilla.
