@@ -3,36 +3,54 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const NEO4J_HOST = process.env.NEO4J_HOST || 'localhost';
-const NEO4J_BOLT_PORT = process.env.NEO4J_BOLT_PORT || '7687';
-const NEO4J_USER = process.env.NEO4J_USER || 'neo4j';
-const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD || 'admin123';
+class Neo4jConnector {
+    constructor() {
+        const NEO4J_HOST = process.env.NEO4J_HOST;
+        const NEO4J_BOLT_PORT = process.env.NEO4J_BOLT_PORT;
+        const NEO4J_USER = process.env.NEO4J_USER;
+        const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
 
-const NEO4J_URL = `bolt://${NEO4J_HOST}:${NEO4J_BOLT_PORT}`;
+        this.NEO4J_URL = `bolt://${NEO4J_HOST}:${NEO4J_BOLT_PORT}`;
+        this.auth = neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD);
+        this.driver = null;
+    }
 
-let driver;
+    async connect() {
+        if (this.driver) {
+            return this.driver;
+        }
 
-export async function connectNeo4j() {
-  try {
-    driver = neo4j.driver(
-      NEO4J_URL,
-      neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD)
-    );
-    console.log('✅ Conectado a Neo4j');
-    return driver;
-  } catch (error) {
-    console.error('❌ Error conectando a Neo4j:', error);
-    throw error;
-  }
+        try {
+            this.driver = neo4j.driver(this.NEO4J_URL, this.auth);
+            await this.driver.verifyConnectivity();
+            console.log('✅ Conectado a Neo4j');
+            return this.driver;
+        } catch (error) {
+            console.error('❌ Error conectando a Neo4j:', error);
+            throw error;
+        }
+    }
+
+    getDriver() {
+        if (!this.driver) {
+            throw new Error('Driver de Neo4j no conectado. Llama a connect() primero.');
+        }
+
+        return this.driver;
+    }
+    
+    getSession() {
+        return this.getDriver().session();
+    }
+
+    async close() {
+        if (this.driver) {
+            await this.driver.close();
+            this.driver = null;
+            console.log('🔌 Desconectado de Neo4j');
+        }
+    }
 }
 
-export function getNeo4jDriver() {
-  return driver;
-}
-
-export async function closeNeo4j() {
-  if (driver) {
-    await driver.close();
-    console.log('🔌 Desconectado de Neo4j');
-  }
-}
+const neo4jConnection = new Neo4jConnector();
+export default neo4jConnection;
