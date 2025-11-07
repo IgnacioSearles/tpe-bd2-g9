@@ -23,39 +23,50 @@ const queries = {
     "Query 10: Pólizas suspendidas con estado del cliente.": query10,
 }
 
-const queryResultFile = "./queryResult.json";
-
 async function main() {
     console.log(chalk.green(await figlet.text("ASEGURADORA S.A.", {font: "Big"})));
 
     await mongoConnection.connect();
     await neo4jConnection.connect();
 
-    const answer = await inquirer.prompt({
+    const answers = await inquirer.prompt([{
         type: "list",
         name: "selectedQuery",
         message: " Seleccionar query a ejecutar: ",
         choices: [...Object.keys(queries), new inquirer.Separator(), "Salir"],
         pageSize: Object.keys(queries).length + 2,
         loop: false
-    });
+    },
+    {
+        type: "input",
+        name: "outputFile",
+        message: " Nombre del archivo de salida (sin extensión): ",
+        default: "queryResult",
+        when: (answers) => answers.selectedQuery !== "Salir",
+        validate: (input) => {
+            if (input.trim() === "") return "El nombre del archivo no puede estar vacío";
+            if (/[<>:"/\\|?*]/.test(input)) return "El nombre contiene caracteres inválidos";
+            return true;
+        }
+    }]);
 
-    if (answer.selectedQuery === "Salir") {
+    if (answers.selectedQuery === "Salir") {
         console.log(chalk.yellow(" Saliendo del programa..."));
         await mongoConnection.close();
         await neo4jConnection.close();
         process.exit(0);
     }
 
-    const spinner = ora(` Ejecutando query: ${answer.selectedQuery}`).start();
+    const spinner = ora(` Ejecutando query: ${answers.selectedQuery}`).start();
 
     try {
-        const queryResult = await queries[answer.selectedQuery]();
+        const queryResult = await queries[answers.selectedQuery]();
         spinner.succeed(chalk.green(` Query ejecutada con éxito`));
 
-        const fileSpinner = ora(` Guardando resultado en ${queryResultFile}`).start();
-        await fs.writeFileSync(queryResultFile, JSON.stringify(queryResult, null, 2));
-        fileSpinner.succeed(chalk.green(` Resultado guardado en ${queryResultFile}`));
+        const outputPath = `./${answers.outputFile}.json`;
+        const fileSpinner = ora(` Guardando resultado en ${outputPath}`).start();
+        await fs.writeFileSync(outputPath, JSON.stringify(queryResult, null, 2));
+        fileSpinner.succeed(chalk.green(` Resultado guardado en ${outputPath}`));
     } catch (error) {
         spinner.fail(chalk.red(` Error al ejecutar la query`));
         console.error(error);
