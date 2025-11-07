@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
+import ora from "ora";
 
 dotenv.config();
 
@@ -20,12 +21,15 @@ class MongoConnector {
             return this.client;
         }
 
+        const spinner = ora(' Conectando a MongoDB...').start();
+
         try {
             this.client = new MongoClient(this.MONGO_URI);
             await this.client.connect();
-            console.log('✅ Conectado a MongoDB');
+            spinner.succeed(' Conectado a MongoDB');
             return this.client;
         } catch (error) {
+            spinner.fail('❌ Error conectando a MongoDB');
             console.error('❌ Error conectando a MongoDB:', error);
             throw error;
         }

@@ -1,6 +1,8 @@
 import neo4j from 'neo4j-driver';
 import dotenv from 'dotenv';
 
+import ora from "ora";
+
 dotenv.config();
 
 class Neo4jConnector {
@@ -20,12 +22,15 @@ class Neo4jConnector {
             return this.driver;
         }
 
+        const spinner = ora(' Conectando a Neo4j...').start();
+
         try {
             this.driver = neo4j.driver(this.NEO4J_URL, this.auth);
             await this.driver.verifyConnectivity();
-            console.log('✅ Conectado a Neo4j');
+            spinner.succeed(' Conectado a Neo4j');
             return this.driver;
         } catch (error) {
+            spinner.fail('Error conectando a Neo4j');
             console.error('❌ Error conectando a Neo4j:', error);
             throw error;
         }
