@@ -35,8 +35,17 @@ async function main() {
         type: "list",
         name: "selectedQuery",
         message: " Seleccionar query a ejecutar: ",
-        choices: Object.keys(queries)
+        choices: [...Object.keys(queries), new inquirer.Separator(), "Salir"],
+        pageSize: Object.keys(queries).length + 2,
+        loop: false
     });
+
+    if (answer.selectedQuery === "Salir") {
+        console.log(chalk.yellow(" Saliendo del programa..."));
+        await mongoConnection.close();
+        await neo4jConnection.close();
+        process.exit(0);
+    }
 
     const spinner = ora(` Ejecutando query: ${answer.selectedQuery}`).start();
 
@@ -49,6 +58,7 @@ async function main() {
         fileSpinner.succeed(chalk.green(` Resultado guardado en ${queryResultFile}`));
     } catch (error) {
         spinner.fail(chalk.red(` Error al ejecutar la query`));
+        console.error(error);
     }
 
     await mongoConnection.close();
