@@ -2,6 +2,7 @@ import { query1, query2, query3 } from "./queries.js";
 
 import mongoConnection from "./config/mongodb.js";
 import neo4jConnection from "./config/neo4j.js";
+import fs from "fs";
 
 import figlet from "figlet";
 
@@ -10,10 +11,12 @@ import ora from "ora";
 import chalk from "chalk";
 
 const queries = {
-     "Query 1: Clientes activos con sus pólizas vigentes.": query1,
-     "Query 2: Siniestros abiertos con tipo, monto y cliente afectado.": query2,
-     "Query 3: Vehículos asegurados con su cliente y póliza.": query3,
+    "Query 1: Clientes activos con sus pólizas vigentes.": query1,
+    "Query 2: Siniestros abiertos con tipo, monto y cliente afectado.": query2,
+    "Query 3: Vehículos asegurados con su cliente y póliza.": query3,
 }
+
+const queryResultFile = "./queryResult.json";
 
 async function main() {
     console.log(chalk.green(await figlet.text("ASEGURADORA S.A.", {font: "Big"})));
@@ -24,7 +27,7 @@ async function main() {
     const answer = await inquirer.prompt({
         type: "list",
         name: "selectedQuery",
-        message: "Seleccionar query a ejecutar: ",
+        message: " Seleccionar query a ejecutar: ",
         choices: Object.keys(queries)
     });
 
@@ -34,7 +37,9 @@ async function main() {
         const queryResult = await queries[answer.selectedQuery]();
         spinner.succeed(chalk.green(` Query ejecutada con éxito`));
 
-        console.log(JSON.stringify(queryResult, null, 2));
+        const fileSpinner = ora(` Guardando resultado en ${queryResultFile}`).start();
+        await fs.writeFileSync(queryResultFile, JSON.stringify(queryResult, null, 2));
+        fileSpinner.succeed(chalk.green(` Resultado guardado en ${queryResultFile}`));
     } catch (error) {
         spinner.fail(chalk.red(` Error al ejecutar la query`));
     }
