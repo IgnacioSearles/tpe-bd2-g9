@@ -9,7 +9,8 @@ export async function query1() {
         id_cliente: 1,
         nombre: 1,
         apellido: 1,
-        polizas: 1 
+        dni: 1,
+        polizas: { $filter: {input: "$polizas", as: "poliza", cond: { $eq: ["$$poliza.estado", "Activa"] } } }
     }}).toArray();
 
     return clientes;
@@ -78,4 +79,59 @@ export async function query3() {
     ]).toArray();
 
     return vehiculos;
+}
+
+export async function query4() {
+    const mongo = mongoConnection.getDb();
+
+    //clientes sin polizas activas
+    const resultados = await mongo
+      .collection("clientes")
+      .find(
+        {
+          $or: [
+            { polizas: { $exists: false } },
+            { polizas: { $size: 0 } },
+            { polizas: { $not: { $elemMatch: { estado: "Activa" } } } },
+          ],
+        },
+        {
+          projection: {
+            _id: 0,
+            id_cliente: 1,
+            nombre: 1,
+            apellido: 1,
+            dni: 1,
+          },
+        }
+      )
+      .toArray();
+
+    return resultados;
+}
+
+export async function query5() {
+    const neo4j = neo4jConnection.getSession();
+    const resultados = await neo4j.run(
+        "MATCH (a:Agent)-[:ASSIGNED_TO]->(p:Policy) " +
+        "WHERE a.activo = true " +
+        "RETURN a, COUNT(p) AS cantidad_polizas"
+    );
+
+    neo4j.close();
+
+    return resultados.records.map(record => {
+        const agent = record.get('a').properties;
+        const cantidad_polizas = record.get('cantidad_polizas').toInt();
+        return {
+            id_agente: agent.id_agente,
+            nombre: agent.nombre,
+            apellido: agent.apellido,
+            matricula: agent.matricula,
+            telefono: agent.telefono,
+            email: agent.email,
+            zona: agent.zona,
+            cantidad_polizas: cantidad_polizas
+        };
+    });
 }

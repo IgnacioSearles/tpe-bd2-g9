@@ -116,8 +116,10 @@ async function loadPolicies(mongo, neo4j) {
         await neo4j.run(
             "UNWIND $batch AS p " +
             "MATCH (u:User {id_cliente: p.id_cliente}) " +
+            "MATCH (a:Agent {id_agente: p.id_agente}) " +
             "CREATE (policy:Policy {nro_poliza: p.nro_poliza, tipo: p.tipo, cobertura_total: p.cobertura_total, fecha_inicio: p.fecha_inicio, fecha_fin: p.fecha_fin, prima_mensual: p.prima_mensual, estado: p.estado}) " +
-            "CREATE (u)-[:HAS_POLICY]->(policy)",
+            "CREATE (u)-[:HAS_POLICY]->(policy)" +
+            "CREATE (a)-[:ASSIGNED_TO]->(policy)",
             { batch: neo4jBatch }
         );
     });
@@ -134,7 +136,7 @@ async function loadAgents(neo4j) {
 
         await neo4j.run(
             "UNWIND $batch AS a " +
-            "CREATE (n:Agent {id_agente: a.id_agente, nombre: a.nombre, apellido: a.apellido, matricula: a.matricula, telefono: a.telefono, email: a.email, zona: a.zona, activo: a.activo})",
+            "CREATE (n:Agent {id_agente: a.id_agente, nombre: a.nombre, apellido: a.apellido, matricula: a.matricula, telefono: a.telefono, email: a.email, zona: a.zona, activo: a.activo})", 
             { batch: neo4jBatch }
         );
     });
@@ -180,11 +182,11 @@ async function seedDatabases() {
         console.log("Loading vehicles...");
         await loadVehicles(mongo);
 
-        console.log("Loading policies...");
-        await loadPolicies(mongo, neo4j);
-
         console.log("Loading agents...");
         await loadAgents(neo4j);
+
+        console.log("Loading policies...");
+        await loadPolicies(mongo, neo4j);
 
         console.log("Loading accidents...");
         await loadAccidents(neo4j);
