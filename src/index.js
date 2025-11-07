@@ -1,4 +1,4 @@
-import { query1, query2, query3, query4, query5 } from "./queries.js";
+import { query1, query2, query3, query4, query5, query6, query7, query8, query9, query10 } from "./queries.js";
 
 import mongoConnection from "./config/mongodb.js";
 import neo4jConnection from "./config/neo4j.js";
@@ -15,7 +15,12 @@ const queries = {
     "Query 2: Siniestros abiertos con tipo, monto y cliente afectado.": query2,
     "Query 3: Vehículos asegurados con su cliente y póliza.": query3,
     "Query 4: Clientes sin pólizas activas.": query4,
-    "Query 5: Agentes activos con cantidad de pólizas asignadas.": query5
+    "Query 5: Agentes activos con cantidad de pólizas asignadas.": query5,
+    "Query 6: Pólizas vencidas con el nombre del cliente.": query6,
+    "Query 7: Top 10 clientes con mayor cobertura total acumulada.": query7,
+    "Query 8: Siniestros por accidente del último año.": query8,
+    "Query 9: Pólizas activas ordenadas por fecha de inicio.": query9,
+    "Query 10: Pólizas suspendidas con estado del cliente.": query10,
 }
 
 const queryResultFile = "./queryResult.json";

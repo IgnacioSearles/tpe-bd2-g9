@@ -135,3 +135,172 @@ export async function query5() {
         };
     });
 }
+
+export async function query6() {
+    const neo4j = neo4jConnection.getSession();
+    const resultados = await neo4j.run(
+        "MATCH (p:Policy)<-[:HAS_POLICY]-(u:User) " +
+        "WHERE p.estado = 'Vencida' " +
+        "RETURN p, u"
+    );
+
+    neo4j.close();
+
+    return resultados.records.map(record => {
+        const policy = record.get('p').properties;
+        const user = record.get('u').properties;
+        return {
+            nro_poliza: policy.nro_poliza,
+            fecha_inicio: policy.fecha_inicio,
+            fecha_fin: policy.fecha_fin,
+            tipo: policy.tipo,
+            estado: policy.estado,
+            cliente: {
+                id_cliente: user.id_cliente,
+                nombre: user.nombre,
+                apellido: user.apellido
+            }
+        };
+    });
+}
+
+export async function query7() {
+    const mongo = mongoConnection.getDb();
+    
+    const clientes = await mongo.collection("clientes").aggregate([
+        { $unwind: "$polizas" },
+        {
+            $group: {
+                _id: {
+                    id_cliente: "$id_cliente",
+                    nombre: "$nombre",
+                    apellido: "$apellido"
+                },
+                cobertura_total: { $sum: "$polizas.cobertura_total" }
+            }
+        },
+        { 
+            $sort: { 
+                cobertura_total: -1,
+                "_id.apellido": 1,
+                "_id.nombre": 1,
+                "_id.id_cliente": 1
+            } 
+        },
+        { $limit: 10 },
+        {
+            $project: {
+                _id: 0,
+                id_cliente: "$_id.id_cliente",
+                nombre: "$_id.nombre",
+                apellido: "$_id.apellido",
+                cobertura_total: 1
+            }
+        }
+    ]).toArray();
+
+    return clientes;
+}
+
+export async function query8() {
+    const neo4j = neo4jConnection.getSession();
+    
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const formattedDate = oneYearAgo.toISOString().split('T')[0];
+    
+    const resultados = await neo4j.run(
+        "MATCH (a:Accident)<-[:HAS_ACCIDENT]-(p:Policy)<-[:HAS_POLICY]-(u:User) " +
+        "WITH a, p, u, " +
+        "apoc.date.fields(a.fecha, 'd/M/yyyy') as accidentDate, " +
+        "apoc.date.fields($lastYear, 'yyyy-MM-dd') as yearAgoDate " +
+        "WHERE a.tipo = 'Accidente' AND " +
+        "datetime({ year: accidentDate.years, month: accidentDate.months, day: accidentDate.days }) > " +
+        "datetime({ year: yearAgoDate.years, month: yearAgoDate.months, day: yearAgoDate.days }) " +
+        "RETURN a, p, u " +
+        "ORDER BY datetime({ year: accidentDate.years, month: accidentDate.months, day: accidentDate.days }) DESC",
+        { lastYear: formattedDate }
+    );
+
+    neo4j.close();
+
+    return resultados.records.map(record => {
+        const accident = record.get('a').properties;
+        const policy = record.get('p').properties;
+        const user = record.get('u').properties;
+        return {
+            id_siniestro: accident.id_siniestro,
+            fecha: accident.fecha,
+            descripcion: accident.descripcion,
+            monto_estimado: accident.monto_estimado,
+            estado: accident.estado,
+            poliza: {
+                nro_poliza: policy.nro_poliza,
+                tipo: policy.tipo
+            },
+            cliente: {
+                id_cliente: user.id_cliente,
+                nombre: user.nombre,
+                apellido: user.apellido
+            }
+        };
+    });
+}
+
+export async function query9() {
+    const neo4j = neo4jConnection.getSession();
+    const resultados = await neo4j.run(
+        "MATCH (p:Policy)<-[:HAS_POLICY]-(u:User) " +
+        "WHERE p.estado = 'Activa' " +
+        "RETURN p, u " +
+        "ORDER BY p.fecha_inicio"
+    );
+
+    neo4j.close();
+
+    return resultados.records.map(record => {
+        const policy = record.get('p').properties;
+        const user = record.get('u').properties;
+        return {
+            nro_poliza: policy.nro_poliza,
+            fecha_inicio: policy.fecha_inicio,
+            fecha_fin: policy.fecha_fin,
+            tipo: policy.tipo,
+            cobertura_total: policy.cobertura_total,
+            prima_mensual: policy.prima_mensual,
+            cliente: {
+                id_cliente: user.id_cliente,
+                nombre: user.nombre,
+                apellido: user.apellido
+            }
+        };
+    });
+}
+
+export async function query10() {
+    const neo4j = neo4jConnection.getSession();
+    const resultados = await neo4j.run(
+        "MATCH (p:Policy)<-[:HAS_POLICY]-(u:User) " +
+        "WHERE p.estado = 'Suspendida' " +
+        "RETURN p, u"
+    );
+
+    neo4j.close();
+
+    return resultados.records.map(record => {
+        const policy = record.get('p').properties;
+        const user = record.get('u').properties;
+        return {
+            nro_poliza: policy.nro_poliza,
+            tipo: policy.tipo,
+            fecha_inicio: policy.fecha_inicio,
+            fecha_fin: policy.fecha_fin,
+            cliente: {
+                id_cliente: user.id_cliente,
+                nombre: user.nombre,
+                apellido: user.apellido,
+                activo: user.activo
+            }
+        };
+    });
+}
