@@ -10,8 +10,10 @@ class MongoConnector {
         const MONGO_PORT = process.env.MONGO_PORT;
         const MONGO_USER = process.env.MONGO_USER;
         const MONGO_PASSWORD = process.env.MONGO_PASSWORD;
+        const MONGO_DATABASE = process.env.MONGO_DATABASE;
+        const MONGO_REPLICA_SET = process.env.MONGO_REPLICA_SET;
 
-        this.MONGO_URI = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}`;
+        this.MONGO_URI = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=${MONGO_USER}&replicaSet=${MONGO_REPLICA_SET}`;
         this.DB_NAME = process.env.MONGO_DATABASE;
         this.client = null;
     }

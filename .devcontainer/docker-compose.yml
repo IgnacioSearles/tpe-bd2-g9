@@ -10,6 +10,7 @@ services:
       MONGO_USER: ${MONGO_USER:-admin}
       MONGO_PASSWORD: ${MONGO_PASSWORD:-admin}
       MONGO_DATABASE: ${MONGO_DATABASE:-aseguradora}
+      MONGO_REPLICA_SET: ${MONGO_REPLICA_SET:-rs0}
 
       NEO4J_HOST: neo4j
       NEO4J_BOLT_PORT: 7687 
@@ -22,8 +23,10 @@ services:
       - db_network
     command: tail -f /dev/null
     depends_on:
-      - mongodb
-      - neo4j
+      mongodb:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
 
   mongodb:
     image: mongo:latest
@@ -35,8 +38,16 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin}
     volumes:
       - mongodb_data:/data/db
+      - ../mongodb-keyfile:/opt/keyfile:ro
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--auth", "--keyFile", "/opt/keyfile/keyfile"]
     networks:
       - db_network
+    healthcheck:
+      test: ["CMD", "mongosh", "-u", "admin", "-p", "admin", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
 
   neo4j:
     image: neo4j:latest
@@ -56,6 +67,13 @@ services:
       - neo4j_plugins:/plugins
     networks:
       - db_network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-neoadmin}", "RETURN 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 8
+      start_period: 15s
+      
 
 volumes:
   mongodb_data:
