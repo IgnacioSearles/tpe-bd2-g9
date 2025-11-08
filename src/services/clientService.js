@@ -263,7 +263,7 @@ export class ClientService {
                 }
 
                 const updateFields = {};
-                ClienteService.FIELD_CONFIG.updatable_mongodb.forEach(field => {
+                ClientService.FIELD_CONFIG.updatable_mongodb.forEach(field => {
                     if (updateData[field] !== undefined) {
                         updateFields[field] = updateData[field];
                     }
@@ -296,7 +296,7 @@ export class ClientService {
         await session.executeWrite(async tx => {
 
             const fieldsToUpdate = {};
-            ClienteService.FIELD_CONFIG.updatable_neo4j.forEach(field => {
+            ClientService.FIELD_CONFIG.updatable_neo4j.forEach(field => {
                 if (updateData[field] !== undefined) {
                     fieldsToUpdate[field] = updateData[field];
                 }
@@ -354,17 +354,33 @@ export class ClientService {
     }
 
     async #validateAndGetData(clientData, mongo, mongoSession) {
-        const [existingDni, lastClient] = await Promise.all([
+        const [existingDni, maxIdResult] = await Promise.all([
             mongo.collection("clientes").findOne(
                 { dni: clientData.dni },
                 { projection: { id_cliente: 1 }, session: mongoSession }
             ),
-            mongo.collection("clientes").findOne(
-                {},
-                { sort: { id_cliente: -1 }, projection: { id_cliente: 1 }, session: mongoSession }
-            )
+            mongo.collection("clientes").aggregate([
+            {
+                $addFields: {
+                    id_num: { 
+                        $convert: { 
+                            input: "$id_cliente", 
+                            to: "int", 
+                            onError: 0 
+                        } 
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    maxId: { $max: "$id_num" }
+                }
+            }
+        ], { session: mongoSession }).toArray()
         ]);
 
+         const currentMaxId = maxIdResult[0]?.maxId || 0;
         let lastVehicleId = "";
         let patentConflicts = [];
 
@@ -393,7 +409,7 @@ export class ClientService {
         return {
             dniExists: !!existingDni,
             existingDni: existingDni,
-            lastClientId: lastClient?.id_cliente || "0",
+             lastClientId: currentMaxId.toString(),
             lastVehicleId: lastVehicleId,
             patentConflicts: patentConflicts
         };

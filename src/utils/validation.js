@@ -1,11 +1,11 @@
 export function validateClient(client) {
     const errors = [];
-    
+
     if (!client.nombre?.trim()) errors.push("nombre es requerido");
     if (!client.apellido?.trim()) errors.push("apellido es requerido");
     if (!client.dni) errors.push("dni es requerido");
     if (!client.email) errors.push("email es requerido");
-    
+
     if (client.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(client.email)) {
         errors.push("email tiene formato inválido");
     }
@@ -21,22 +21,22 @@ export function validateClient(client) {
     if (errors.length > 0) {
         throw new Error(`Errores de validación: ${errors.join(', ')}`);
     }
-    
+
     return true;
 }
 
 export function validateClientUpdate(data) {
     const errors = [];
-    
+
     const forbiddenFields = ['id_cliente', 'dni', 'polizas', '_id'];
-    const invalidFields = Object.keys(data).filter(field => 
+    const invalidFields = Object.keys(data).filter(field =>
         forbiddenFields.includes(field)
     );
 
     if (invalidFields.length > 0) {
         errors.push(`No se pueden actualizar los campos: ${invalidFields.join(', ')}`);
     }
-    
+
     if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
         errors.push("email tiene formato inválido");
     }
@@ -44,7 +44,7 @@ export function validateClientUpdate(data) {
     if (data.telefono && !/^\+?\d+$/.test(data.telefono.toString())) {
         errors.push("teléfono debe contener solo dígitos (opcionalmente con + para código de país)");
     }
-    
+
     if (data.nombre && !data.nombre.trim()) {
         errors.push("nombre no puede estar vacío");
     }
@@ -72,20 +72,20 @@ export function validateClientUpdate(data) {
     if (errors.length > 0) {
         throw new Error(`Errores de validación: ${errors.join(', ')}`);
     }
-    
+
     return true;
 }
 
 export function validateAccident(accident) {
     const errores = [];
-    
+
     if (!accident.nro_poliza) errores.push("nro_poliza es requerido");
     if (!accident.fecha) errores.push("fecha es requerida");
     if (!accident.tipo) errores.push("tipo de siniestro es requerido");
     if (accident.monto_estimado === undefined || accident.monto_estimado === null) {
         errores.push("monto_estimado es requerido");
     }
-    
+
     const tiposPermitidos = ['Accidente', 'Robo', 'Incendio', 'Danio', 'Vandalismo'];
     if (accident.tipo && !tiposPermitidos.includes(accident.tipo)) {
         errores.push(`tipo de siniestro debe ser uno de: ${tiposPermitidos.join(', ')}`);
@@ -103,26 +103,26 @@ export function validateAccident(accident) {
     }
 
     if (accident.fecha) {
-        const fecha = new Date(accident.fecha);
-        const hoy = new Date();
-        
-        if (isNaN(fecha.getTime())) {
-            errores.push("fecha debe tener un formato válido");
-        } else if (fecha > hoy) {
-            errores.push("fecha no puede ser futura");
+
+        if (accident.fecha && !validateDateFormat(accident.fecha)) {
+            errores.push("fecha de inicio debe tener formato DD/MM/YYYY");
+        }
+
+        if (accident.fecha_fin && !validateDateFormat(accident.fecha_fin)) {
+            errores.push("fecha de fin debe tener formato DD/MM/YYYY");
         }
     }
-        
+
     if (errores.length > 0) {
         throw new Error(`Errores de validación del siniestro: ${errores.join(', ')}`);
     }
-    
+
     return true;
 }
 
 export function validatePolicy(policy) {
     const errores = [];
-    
+
     if (!policy.tipo) errores.push("tipo de póliza es requerido");
     if (!policy.id_cliente) errores.push("id_cliente es requerido");
     if (!policy.id_agente) errores.push("agente es requerido");
@@ -138,7 +138,7 @@ export function validatePolicy(policy) {
     if (policy.nro_poliza !== undefined && policy.nro_poliza && !/^POL\d+$/.test(policy.nro_poliza)) {
         errores.push("número de póliza debe tener formato POLxxxx (ej: POL1001)");
     }
-    
+
     const tiposPermitidos = ['Auto', 'Vida', 'Hogar', 'Salud'];
     if (policy.tipo && !tiposPermitidos.includes(policy.tipo)) {
         errores.push(`tipo de póliza debe ser uno de: ${tiposPermitidos.join(', ')}`);
@@ -160,25 +160,85 @@ export function validatePolicy(policy) {
     }
 
     if (policy.fecha_inicio && policy.fecha_fin) {
-        const start = new Date(policy.fecha_inicio);
-        const end = new Date(policy.fecha_fin);
-
-        if (isNaN(start.getTime())) {
-            errores.push("fecha de inicio debe tener un formato válido");
+        if (policy.fecha_inicio && !validateDateFormat(policy.fecha_inicio)) {
+            errores.push("fecha de inicio debe tener formato DD/MM/YYYY");
         }
 
-        if (isNaN(end.getTime())) {
-            errores.push("fecha de fin debe tener un formato válido");
+        if (policy.fecha_fin && !validateDateFormat(policy.fecha_fin)) {
+            errores.push("fecha de fin debe tener formato DD/MM/YYYY");
         }
 
-        if (start.getTime() && end.getTime() && end <= start) {
-            errores.push("fecha de fin debe ser posterior a fecha de inicio");
+        if (policy.fecha_inicio && policy.fecha_fin) {
+            if (!validateDateRange(policy.fecha_inicio, policy.fecha_fin)) {
+                errores.push("fecha de fin debe ser posterior a fecha de inicio");
+            }
         }
     }
-    
+
     if (errores.length > 0) {
         throw new Error(`Errores de validación de la póliza: ${errores.join(', ')}`);
     }
-    
+
     return true;
+}
+
+export function validateDateFormat(dateString) {
+    // ✅ Validar formato exacto DD/MM/YYYY (permite 1 o 2 dígitos)
+    if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
+        return false;
+    }
+
+    // ✅ Parsear y validar que sea una fecha válida
+    const [day, month, year] = dateString.split('/').map(Number);
+    const date = new Date(year, month - 1, day);
+
+    // ✅ Verificar que la fecha es válida y no hay overflow
+    if (isNaN(date.getTime()) ||
+        date.getDate() !== day ||
+        date.getMonth() !== month - 1 ||
+        date.getFullYear() !== year) {
+        return false;
+    }
+
+    return true;
+}
+
+export function parseDate(dateString) {
+    if (!validateDateFormat(dateString)) {
+        return null;
+    }
+
+    const [day, month, year] = dateString.split('/').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+export function formatDate(date) {
+    if (!date || isNaN(date.getTime())) {
+        return '';
+    }
+
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+}
+
+export function validateDateNotFuture(dateString) {
+    const date = parseDate(dateString);
+    if (!date) return false;
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); 
+
+    return date <= today;
+}
+
+export function validateDateRange(startDate, endDate) {
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+
+    if (!start || !end) return false;
+
+    return start < end;
 }
