@@ -25,6 +25,7 @@ services:
     depends_on:
       - mongodb
       - neo4j
+      - mongo-init
 
   mongodb:
     image: mongo:latest
@@ -44,6 +45,7 @@ services:
 
   mongo-init:
     image: mongo:latest
+    container_name: mongodb-init
     depends_on:
       - mongodb
     entrypoint: >
