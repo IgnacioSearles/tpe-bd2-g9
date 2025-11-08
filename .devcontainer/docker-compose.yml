@@ -43,10 +43,10 @@ services:
       - db_network
     healthcheck:
       test: ["CMD", "mongosh", "-u", "admin", "-p", "admin", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
-      interval: 5s
-      timeout: 3s
-      retries: 6
-      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   neo4j:
     image: neo4j:latest
