@@ -20,6 +20,9 @@ services:
       - /app/node_modules
     networks:
       - db_network
+    depends_on:
+      - mongodb
+      - neo4j
 
   mongodb:
     image: mongo:latest
@@ -34,9 +37,6 @@ services:
     networks:
       - db_network
     command: tail -f /dev/null
-    depends_on:
-      - mongodb
-      - neo4j
 
   neo4j:
     image: neo4j:latest
