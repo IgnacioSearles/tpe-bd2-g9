@@ -11,7 +11,5 @@
                 "neo4j.neo4j-vscode-plugin"
             ]
         }
-    },
-    "postStartCommand": "until docker exec mongodb mongosh -u admin -p admin --authenticationDatabase admin --quiet --eval 'db.adminCommand(\"ping\")' >/dev/null 2>&1; do echo 'Esperando MongoDB...'; sleep 2; done && docker exec mongodb mongosh -u admin -p admin --authenticationDatabase admin --quiet --eval \"try { rs.status(); print('Replica set ya configurado'); } catch(e) { if (e.message.includes('no replset config')) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb:27017'}]}); print('Replica set inicializado'); } }\""
-
+    }
 }
