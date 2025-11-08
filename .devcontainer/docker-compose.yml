@@ -23,11 +23,8 @@ services:
       - db_network
     command: tail -f /dev/null
     depends_on:
-      mongodb:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-
+      - mongodb
+      - neo4j
   mongodb:
     image: mongo:latest
     container_name: mongodb
@@ -41,12 +38,6 @@ services:
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--auth"]
     networks:
       - db_network
-    healthcheck:
-      test: ["CMD", "mongosh", "-u", "admin", "-p", "admin", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
 
   neo4j:
     image: neo4j:latest
@@ -66,12 +57,6 @@ services:
       - neo4j_plugins:/plugins
     networks:
       - db_network
-    healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-neoadmin}", "RETURN 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 8
-      start_period: 15s
       
 
 volumes:
