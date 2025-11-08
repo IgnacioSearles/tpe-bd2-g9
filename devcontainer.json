@@ -1,0 +1,18 @@
+{
+    "name": "Back Office de Aseguradora S.A. - TPE BD - G9",
+    "dockerComposeFile": [
+        "../docker-compose.yml"
+    ],
+    "service": "app",
+    "workspaceFolder": "/app",
+    "postCreateCommand": "npm install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "neo4j.neo4j-vscode-plugin"
+            ]
+        }
+    }
+}
