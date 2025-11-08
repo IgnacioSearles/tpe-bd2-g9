@@ -26,7 +26,7 @@ class MongoConnector {
         const spinner = ora(' Conectando a MongoDB...').start();
 
         try {
-
+            console.log(this.MONGO_URI);
             this.client = new MongoClient(this.MONGO_URI);
             await this.client.connect();
             spinner.succeed(' Conectado a MongoDB');
