@@ -13,14 +13,9 @@ class MongoConnector {
         const MONGO_DATABASE = process.env.MONGO_DATABASE;
         const MONGO_REPLICA_SET = process.env.MONGO_REPLICA_SET;
 
-        this.MONGO_URI = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=${MONGO_USER}&replicaSet=${MONGO_REPLICA_SET}`;
-        this.MONGO_URI_ADMIN = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/admin?authSource=admin`;
-        this.MONGO_HOST = MONGO_HOST;
-        this.MONGO_PORT = MONGO_PORT;
-        this.MONGO_REPLICA_SET = MONGO_REPLICA_SET;
-        this.DB_NAME = MONGO_DATABASE;
+        this.MONGO_URI = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin&replicaSet=${MONGO_REPLICA_SET}`;
         this.client = null;
-        this.replicaSetInitialized = false;
+        this.DB_NAME = MONGO_DATABASE;
     }
 
     async connect() {
@@ -31,7 +26,6 @@ class MongoConnector {
         const spinner = ora(' Conectando a MongoDB...').start();
 
         try {
-            await this.initializeReplicaSet();
 
             this.client = new MongoClient(this.MONGO_URI);
             await this.client.connect();
@@ -55,57 +49,10 @@ class MongoConnector {
         return this.getClient().db(this.DB_NAME);
     }
 
-    async initializeReplicaSet() {
-        if (this.replicaSetInitialized) {
-            return;
-        }
-
-        const spinner = ora('🔧 Verificando configuración de replica set...').start();
-        
-        try {
-            const adminClient = new MongoClient(this.MONGO_URI_ADMIN);
-            await adminClient.connect();
-            const admin = adminClient.db('admin');
-
-            try {
-                const status = await admin.command({ replSetGetStatus: 1 });
-                spinner.succeed('✅ Replica set ya configurado');
-                this.replicaSetInitialized = true;
-            } catch (error) {
-                if (error.message.includes('no replset config')) {
-                    spinner.text = '🔧 Inicializando replica set...';
-                    
-                    await admin.command({
-                        replSetInitiate: {
-                            _id: this.MONGO_REPLICA_SET,
-                            members: [{ 
-                                _id: 0, 
-                                host: `${this.MONGO_HOST}:${this.MONGO_PORT}` 
-                            }]
-                        }
-                    });
-                    
-                    spinner.text = '⏳ Esperando que el replica set esté activo...';
-                    await this.waitForReplicaSetReady(admin);
-                    
-                    spinner.succeed('✅ Replica set inicializado correctamente');
-                    this.replicaSetInitialized = true;
-                } else {
-                    throw error;
-                }
-            }
-            
-            await adminClient.close();
-        } catch (error) {
-            spinner.fail('❌ Error configurando replica set');
-            throw error;
-        }
-    }
-
     async close() {
         if (this.client) {
             await this.client.close();
-            this.client = null; // Resetea el cliente
+            this.client = null;
             console.log('🔌 Desconectado de MongoDB');
         }
     }
