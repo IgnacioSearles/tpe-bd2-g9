@@ -38,8 +38,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin}
     volumes:
       - mongodb_data:/data/db
-      - ../mongodb-keyfile:/opt/keyfile:ro
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--auth", "--keyFile", "/opt/keyfile/keyfile"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--auth"]
     networks:
       - db_network
     healthcheck:
