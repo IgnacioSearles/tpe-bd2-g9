@@ -304,3 +304,76 @@ export async function query10() {
         };
     });
 }
+
+export async function query11() {
+    const mongo = mongoConnection.getDb();
+
+    const clientes = await mongo.collection("clientes").aggregate([
+        {
+            $set: {
+                cantidadAsegurados: {
+                    $size: {
+                        $filter: {
+                            input: "$vehiculos",
+                            as: "vehiculo",
+                            cond: { $eq: ["$$vehiculo.asegurado", true] }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $match: {
+                cantidadAsegurados: { $gt: 1 }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                id_cliente: 1,
+                nombre: 1,
+                apellido: 1,
+                dni: 1,
+                email: 1,
+                telefono: 1,
+                direccion: 1,
+                ciudad: 1,
+                provincia: 1,
+                activo: 1,
+                cantidadAsegurados: 1
+            }
+        }
+    ]).toArray();
+
+    return clientes;
+}
+
+export async function query12() {
+    const neo4j = neo4jConnection.getSession();
+
+    const result = await neo4j.run(
+        `MATCH (a:Agent)-[:ASSIGNED_TO]->(p:Policy)-[:HAS_ACCIDENT]->(acc:Accident)
+        WITH a, COUNT(acc) AS total_siniestros
+        RETURN 
+            a.id_agente AS id_agente,
+            a.nombre AS nombre,
+            a.apellido AS apellido,
+            a.matricula AS matricula,
+            a.zona AS zona,
+            a.activo AS activo,
+            total_siniestros
+        ORDER BY total_siniestros DESC`
+    );
+
+    neo4j.close();
+
+    return result.records.map(record => ({
+        id_agente: record.get('id_agente'),
+        nombre: record.get('nombre'),
+        apellido: record.get('apellido'),
+        matricula: record.get('matricula'),
+        zona: record.get('zona'),
+        activo: record.get('activo'),
+        total_siniestros: record.get('total_siniestros').toNumber()
+    }));
+}

@@ -161,6 +161,54 @@ async function loadAccidents(neo4j) {
     });
 }
 
+async function createIndexes(mongo) {    
+    try {
+        await mongo.collection("clientes").createIndex(
+            { "dni": 1 }, 
+            { 
+                unique: true, 
+                background: true,
+                name: "idx_dni_unique" 
+            }
+        );
+
+        await mongo.collection("clientes").createIndex(
+            { "id_cliente": -1 }, 
+            { 
+                background: true,
+                name: "idx_id_cliente_desc" 
+            }
+        );
+
+        await mongo.collection("clientes").createIndex(
+            { "vehiculos.patente": 1 }, 
+            { 
+                background: true,
+                name: "idx_vehiculos_patente" 
+            }
+        );
+
+        await mongo.collection("clientes").createIndex(
+            { "vehiculos.id_vehiculo": -1 }, 
+            { 
+                background: true,
+                name: "idx_vehiculos_id_desc" 
+            }
+        );
+        
+    } catch (error) {
+        if (error.code === 11000) {
+            console.error("❌ Error: Ya existen datos duplicados en la BD");
+            console.log("💡 Solución: Limpia la BD antes de crear índices únicos");
+        } else if (error.code === 85) {
+            console.log("ℹ️ Algunos índices ya existían, continuando...");
+        } else {
+            console.error("⚠️ Error creando índices:", error.message);
+        }
+    }
+}
+
+
 async function seedDatabases() {
     let neo4j;
     try {
@@ -174,6 +222,8 @@ async function seedDatabases() {
 
         await neo4j.run("MATCH (n) DETACH DELETE n");
 
+        console.log("Creating indexes in MongoDB...");
+        await createIndexes(mongo);
         console.log("Seeding databases...");
 
         console.log("Loading users...");
@@ -202,5 +252,7 @@ async function seedDatabases() {
         console.log("Database connections closed.");
     }
 }
+
+
 
 seedDatabases();
