@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: Dockerfile
     container_name: node-app
     environment:
       MONGO_HOST: mongodb 

@@ -1,11 +1,8 @@
 {
     "name": "Back Office de Aseguradora S.A. - TPE BD - G9",
-    "dockerComposeFile": [
-        "../docker-compose.yml"
-    ],
+    "dockerComposeFile": "docker-compose.yml",
     "service": "app",
     "workspaceFolder": "/app",
-    "postCreateCommand": "npm install",
     "customizations": {
         "vscode": {
             "extensions": [
