@@ -48,7 +48,6 @@ export class ClientService {
                 return result.records[0].get('cliente_creado');
             });
 
-            console.log(`Cliente creado con ID ${id_cliente}`);
             return {
                 success: true,
                 id_cliente: id_cliente
@@ -58,7 +57,6 @@ export class ClientService {
             if (clientCreatedInMongo && id_cliente) {
                 await this.#rollbackClientMongo(mongo, id_cliente);
             }
-            console.error('Error creando cliente:', error);
             throw error;
         } finally {
             await session.close();
@@ -89,15 +87,12 @@ export class ClientService {
                 session
             );
 
-            console.log(`Cliente ${id_cliente} actualizado exitosamente`);
             return {
                 success: true,
-                id_cliente: id_cliente,
-                message: `Cliente ${id_cliente} actualizado exitosamente`
+                id_cliente: id_cliente
             };
 
         } catch (error) {
-            console.error(`❌ Error actualizando cliente ${id_cliente}: ${error.message}`);
             if (clientUpdatedInMongo && originalClientData) {
                 await this.#rollbackUpdateMongo(id_cliente, originalClientData, mongo);
             }
@@ -127,17 +122,16 @@ export class ClientService {
 
             await this.#deleteClientNeo4j(id_cliente, session);
 
-            console.log(`Cliente ${id_cliente} eliminado exitosamente`);
             return {
                 success: true,
                 id_cliente: id_cliente,
             };
 
         } catch (error) {
-            console.error(`❌ Error eliminando cliente ${id_cliente}: ${error.message}`);
             if (clientDeletedInMongo && mongoBackupData) {
                 await this.#rollbackDeleteMongo(mongoBackupData, mongo);
             }
+            throw error;
         } finally {
             await session.close();
         }

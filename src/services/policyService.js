@@ -107,17 +107,16 @@ export class PolicyService {
                 throw new Error(`Cliente ${policyData.id_cliente} no encontrado en MongoDB`);
             }
 
-            console.log(`✅ Póliza ${nro_poliza} emitida exitosamente para el cliente ${policyData.id_cliente}`);
             return {
                 success: true,
                 nro_poliza: nro_poliza
             };
 
         } catch (error) {
-            console.error(`❌ Error emitiendo póliza: ${error.message}`);
             if (policyCreatedInNeo4j && nro_poliza) {
                 await this.#rollbackNeo4j(session, nro_poliza);
             }
+            throw new Error(`Error al emitir póliza: ${error.message}`);    
         } finally {
             await session.close();
         }

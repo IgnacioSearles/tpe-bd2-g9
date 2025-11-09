@@ -55,14 +55,13 @@ export class AccidentService {
                 };
             });
 
-            console.log(`✅ Siniestro ${resultado.id_siniestro} emitido exitosamente`);
             return {
                 success: true,
                 id_siniestro: resultado.id_siniestro
             };
 
         } catch (error) {
-            console.error(`❌ Error emitiendo siniestro: ${error.message}`);
+            throw new Error(`Error al emitir siniestro: ${error.message}`);
         } finally {
             await neo4j.close();
         }
